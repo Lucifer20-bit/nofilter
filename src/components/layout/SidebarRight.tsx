@@ -15,7 +15,7 @@ export const SidebarRight: React.FC = () => {
 
   const handleSelectCommunity = (id: string) => {
     setSelectedCommunityId(id);
-    router.push("/");
+    router.push("/feed");
   };
 
   return (
@@ -23,8 +23,8 @@ export const SidebarRight: React.FC = () => {
       {/* Trending Debates Card */}
       {debatePosts.length > 0 && (
         <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-orange-400">
-            <Flame className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300">
+            <Flame className="w-4 h-4 text-zinc-400" />
             <span>Featured Debate</span>
           </div>
 
@@ -42,16 +42,16 @@ export const SidebarRight: React.FC = () => {
                 {/* Live Debate Tug of War Bar */}
                 <div className="w-full">
                   <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-emerald-400">Agree ({agreePct}%)</span>
-                    <span className="text-rose-400">Disagree ({disagreePct}%)</span>
+                    <span className="text-zinc-200">Agree ({agreePct}%)</span>
+                    <span className="text-zinc-400">Disagree ({disagreePct}%)</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-zinc-800 flex overflow-hidden">
                     <div
-                      className="bg-emerald-500 transition-all duration-300"
+                      className="bg-zinc-200 transition-all duration-300"
                       style={{ width: `${agreePct}%` }}
                     />
                     <div
-                      className="bg-rose-500 transition-all duration-300"
+                      className="bg-zinc-600 transition-all duration-300"
                       style={{ width: `${disagreePct}%` }}
                     />
                   </div>
@@ -62,8 +62,8 @@ export const SidebarRight: React.FC = () => {
                     onClick={() => voteDebate(debate.id, "AGREE")}
                     className={`py-1.5 px-2 rounded-lg text-xs font-semibold border transition-all ${
                       debate.userVote === "AGREE"
-                        ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
-                        : "border-zinc-800 hover:bg-zinc-800/60 text-zinc-300"
+                        ? "bg-zinc-800 border-zinc-500 text-white"
+                        : "border-zinc-800 hover:bg-zinc-800/60 text-zinc-400"
                     }`}
                   >
                     Agree ({debate.agreeCount})
@@ -72,8 +72,8 @@ export const SidebarRight: React.FC = () => {
                     onClick={() => voteDebate(debate.id, "DISAGREE")}
                     className={`py-1.5 px-2 rounded-lg text-xs font-semibold border transition-all ${
                       debate.userVote === "DISAGREE"
-                        ? "bg-rose-500/20 border-rose-500 text-rose-300"
-                        : "border-zinc-800 hover:bg-zinc-800/60 text-zinc-300"
+                        ? "bg-zinc-800 border-zinc-500 text-white"
+                        : "border-zinc-800 hover:bg-zinc-800/60 text-zinc-400"
                     }`}
                   >
                     Disagree ({debate.disagreeCount})
@@ -87,8 +87,8 @@ export const SidebarRight: React.FC = () => {
 
       {/* Questions Needing Answers */}
       <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex flex-col gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
-          <HelpCircle className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300">
+          <HelpCircle className="w-4 h-4 text-zinc-400" />
           <span>Needs Honest Advice</span>
         </div>
 
@@ -99,15 +99,15 @@ export const SidebarRight: React.FC = () => {
               onClick={() => handleSelectCommunity(q.communityId)}
               className="group p-2.5 rounded-xl hover:bg-zinc-800/40 transition-colors border border-transparent hover:border-zinc-800 cursor-pointer"
             >
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
                 {q.communityName}
               </span>
-              <p className="text-xs font-medium text-zinc-200 group-hover:text-purple-300 mt-1.5 line-clamp-2">
+              <p className="text-xs font-medium text-zinc-200 group-hover:text-white mt-1.5 line-clamp-2">
                 {q.title || q.content}
               </p>
               <div className="flex items-center justify-between text-[11px] text-zinc-500 mt-1">
                 <span>{q.commentsCount} answers</span>
-                <span>💡 {q.reactions.helpful} helpful</span>
+                <span>{q.reactions.helpful} helpful</span>
               </div>
             </div>
           ))}
@@ -123,7 +123,7 @@ export const SidebarRight: React.FC = () => {
           </div>
           <Link
             href="/communities"
-            className="text-[11px] text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1"
+            className="text-[11px] text-zinc-300 hover:text-white font-medium flex items-center gap-1"
           >
             Explore <ExternalLink className="w-3 h-3" />
           </Link>
@@ -137,11 +137,11 @@ export const SidebarRight: React.FC = () => {
               className="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-800/50 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-sm shadow-sm">
-                  {c.icon}
+                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-xs font-mono font-bold text-zinc-300 border border-zinc-700">
+                  {c.name.charAt(0)}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-zinc-200 truncate hover:text-purple-300">
+                  <p className="text-xs font-semibold text-zinc-200 truncate hover:text-white">
                     {c.name}
                   </p>
                   <p className="text-[10px] text-zinc-500">
@@ -149,7 +149,7 @@ export const SidebarRight: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-purple-400 hover:underline">
+              <span className="text-[11px] font-semibold text-zinc-400 hover:text-white">
                 Filter
               </span>
             </div>
@@ -158,10 +158,10 @@ export const SidebarRight: React.FC = () => {
       </div>
 
       {/* Philosophy Footer */}
-      <div className="p-3 text-[11px] text-zinc-400 rounded-xl bg-purple-950/20 border border-purple-900/30 flex items-start gap-2">
-        <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+      <div className="p-3 text-[11px] text-zinc-400 rounded-xl bg-zinc-900/40 border border-zinc-800 flex items-start gap-2">
+        <ShieldAlert className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
         <p>
-          <span className="font-semibold text-zinc-300">Safe Authenticity:</span> Anonymous to
+          <span className="font-semibold text-zinc-200">Safe Authenticity:</span> Anonymous to
           peers, verified to platform. Zero tolerance for harassment or targeted doxxing.
         </p>
       </div>

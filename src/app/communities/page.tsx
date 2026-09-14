@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shell } from "@/components/layout/Shell";
 import { useNofilterStore } from "@/lib/store";
-import { Compass, Users, ArrowRight, MessageSquareQuote, Check } from "lucide-react";
+import { Compass, Users, ArrowRight, Check } from "lucide-react";
 
 export default function CommunitiesPage() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function CommunitiesPage() {
 
   const handleEnterCommunity = (id: string) => {
     setSelectedCommunityId(id);
-    router.push("/");
+    router.push("/feed");
   };
 
   return (
@@ -28,14 +28,14 @@ export default function CommunitiesPage() {
       <div className="flex flex-col gap-6 p-4 sm:p-6">
         {/* Header */}
         <div className="pb-4 border-b border-zinc-800">
-          <div className="flex items-center gap-2 text-purple-400">
-            <Compass className="w-6 h-6" />
-            <h1 className="text-xl sm:text-2xl font-black text-zinc-100">
-              Explore Focused Communities
+          <div className="flex items-center gap-2 text-zinc-100">
+            <Compass className="w-5 h-5 text-zinc-400" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              Explore Focused Rooms
             </h1>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Authentic spaces dedicated to what you care about. No endless irrelevant algorithmic noise.
+            Spaces dedicated to substantive topics. Zero irrelevant algorithmic distraction.
           </p>
         </div>
 
@@ -56,14 +56,14 @@ export default function CommunitiesPage() {
                       onClick={() => handleEnterCommunity(community.id)}
                       className="flex items-center gap-3 cursor-pointer"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition-transform">
-                        {community.icon}
+                      <div className="w-11 h-11 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-mono font-bold text-sm text-zinc-200">
+                        {community.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <h2 className="text-base font-bold text-zinc-100 group-hover:text-purple-300 transition-colors">
+                        <h2 className="text-sm font-bold text-zinc-100 group-hover:text-white transition-colors">
                           {community.name}
                         </h2>
-                        <span className="text-xs text-zinc-500 font-medium flex items-center gap-1 mt-0.5">
+                        <span className="text-xs text-zinc-400 font-medium flex items-center gap-1 mt-0.5">
                           <Users className="w-3 h-3" />
                           {(community.memberCount / 1000).toFixed(1)}k members
                         </span>
@@ -72,15 +72,15 @@ export default function CommunitiesPage() {
 
                     <button
                       onClick={() => toggleJoin(community.id)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all border ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all border ${
                         isMember
-                          ? "bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:bg-rose-950/30 hover:border-rose-800/40 hover:text-rose-300"
-                          : "bg-purple-600 border-purple-500 text-white hover:bg-purple-500 shadow-md shadow-purple-950/40"
+                          ? "bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:text-white"
+                          : "bg-zinc-100 border-white text-zinc-950 hover:bg-white"
                       }`}
                     >
                       {isMember ? (
                         <>
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3 h-3 text-zinc-300" />
                           <span>Joined</span>
                         </>
                       ) : (
@@ -99,9 +99,9 @@ export default function CommunitiesPage() {
                   {communityPosts.length > 0 && (
                     <div
                       onClick={() => handleEnterCommunity(community.id)}
-                      className="p-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-xs cursor-pointer hover:border-purple-500/40 transition-colors"
+                      className="p-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-xs cursor-pointer hover:border-zinc-700 transition-colors"
                     >
-                      <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-0.5">
+                      <span className="text-[10px] uppercase font-mono text-zinc-400 block mb-0.5">
                         Latest Discussion
                       </span>
                       <p className="text-zinc-300 font-medium line-clamp-1">
@@ -112,7 +112,7 @@ export default function CommunitiesPage() {
 
                   <button
                     onClick={() => handleEnterCommunity(community.id)}
-                    className="w-full py-2 px-3 rounded-xl bg-zinc-800/60 hover:bg-purple-600 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2 px-3 rounded-xl bg-zinc-800/60 hover:bg-zinc-100 text-zinc-300 hover:text-zinc-950 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <span>View Room Discussions</span>
                     <ArrowRight className="w-3.5 h-3.5" />

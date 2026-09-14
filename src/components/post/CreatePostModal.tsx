@@ -3,13 +3,18 @@
 import React, { useState, useMemo } from "react";
 import {
   X,
-  Sparkles,
   Shield,
-  EyeOff,
   UserCheck,
   AlertTriangle,
   HeartHandshake,
   Dice5,
+  Lightbulb,
+  Sparkles,
+  HelpCircle,
+  MessageSquareQuote,
+  Flame,
+  Award,
+  BookOpen,
 } from "lucide-react";
 import { useNofilterStore } from "@/lib/store";
 import { checkPreFlightContent } from "@/lib/moderation";
@@ -118,24 +123,24 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
     onClose();
   };
 
-  const types: { type: PostItem["postType"]; label: string; icon: string; desc: string }[] = [
-    { type: "THOUGHT", label: "Thought", icon: "💭", desc: "Random unfiltered perspectives" },
-    { type: "QUESTION", label: "Question", icon: "❓", desc: "Ask the community for solutions" },
-    { type: "CONFESSION", label: "Confession", icon: "🤫", desc: "Anonymous raw truth" },
-    { type: "DEBATE", label: "Debate", icon: "🔥", desc: "Agree vs Disagree showdown" },
-    { type: "ADVICE", label: "Advice", icon: "💡", desc: "Share or request guidance" },
-    { type: "STORY", label: "Story", icon: "🗣️", desc: "Long-form personal experience" },
-    { type: "ACHIEVEMENT", label: "Milestone", icon: "🏆", desc: "Celebrate real progress" },
+  const types: { type: PostItem["postType"]; label: string; desc: string }[] = [
+    { type: "THOUGHT", label: "Thought", desc: "Random unfiltered perspectives" },
+    { type: "QUESTION", label: "Question", desc: "Ask the community for solutions" },
+    { type: "CONFESSION", label: "Confession", desc: "Anonymous raw truth" },
+    { type: "DEBATE", label: "Debate", desc: "Agree vs Disagree showdown" },
+    { type: "ADVICE", label: "Advice", desc: "Share or request guidance" },
+    { type: "STORY", label: "Story", desc: "Long-form personal experience" },
+    { type: "ACHIEVEMENT", label: "Milestone", desc: "Celebrate real progress" },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl p-5 sm:p-6 flex flex-col gap-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
           <div>
-            <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-              <span>Start Authentic Conversation</span>
+            <h2 className="text-lg font-bold text-zinc-100">
+              Start Authentic Conversation
             </h2>
             <p className="text-xs text-zinc-400">
               No performance. No vanity metrics. Just honest dialogue.
@@ -150,7 +155,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Post Type Selector */}
+          {/* Post Type Selector (Zero Emojis) */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-zinc-400">Content Format</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -166,14 +171,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                   }}
                   className={`p-2.5 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${
                     postType === t.type
-                      ? "bg-purple-950/40 border-purple-500 text-purple-200 ring-1 ring-purple-500/50"
+                      ? "bg-zinc-800 border-zinc-500 text-white"
                       : "bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-900 text-zinc-300"
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-semibold text-xs">
-                    <span>{t.icon}</span>
-                    <span>{t.label}</span>
-                  </div>
+                  <span className="font-semibold text-xs">{t.label}</span>
                   <span className="text-[10px] text-zinc-500 line-clamp-1">{t.desc}</span>
                 </button>
               ))}
@@ -181,27 +183,17 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
           </div>
 
           {/* Identity Mode Selector */}
-          <div
-            className={`p-3 rounded-xl border flex flex-col gap-2.5 transition-all ${
-              identityMode === "ANONYMOUS"
-                ? "bg-rose-950/20 border-rose-800/60"
-                : "bg-zinc-900/50 border-zinc-800"
-            }`}
-          >
+          <div className="p-3 rounded-xl border border-zinc-800 bg-zinc-900/40 flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                <Shield
-                  className={`w-3.5 h-3.5 ${
-                    identityMode === "ANONYMOUS" ? "text-rose-400" : "text-purple-400"
-                  }`}
-                />
+                <Shield className="w-3.5 h-3.5 text-zinc-400" />
                 Post Identity Mode:
               </span>
-              <span className="text-[11px] text-zinc-400">
+              <span className="text-[11px] text-zinc-400 font-mono">
                 {identityMode === "ANONYMOUS"
-                  ? "🔒 Identity completely shielded to public"
+                  ? "Identity completely shielded to public"
                   : identityMode === "ALIAS"
-                  ? "🎭 Per-thread ephemeral pseudonym"
+                  ? "Per-thread ephemeral pseudonym"
                   : "Public as @" + user.username}
               </span>
             </div>
@@ -212,7 +204,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                 onClick={() => setIdentityMode("PROFILE")}
                 className={`py-2 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                   identityMode === "PROFILE"
-                    ? "bg-purple-600 text-white border-purple-500"
+                    ? "bg-zinc-100 text-zinc-950 border-white font-semibold"
                     : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                 }`}
               >
@@ -225,12 +217,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                 onClick={() => setIdentityMode("ANONYMOUS")}
                 className={`py-2 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                   identityMode === "ANONYMOUS"
-                    ? "bg-rose-700 text-white border-rose-600 shadow-md shadow-rose-950/50"
+                    ? "bg-zinc-100 text-zinc-950 border-white font-semibold"
                     : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                 }`}
               >
-                <EyeOff className="w-3.5 h-3.5" />
-                <span>🤫 Anonymous</span>
+                <Shield className="w-3.5 h-3.5" />
+                <span>Anonymous</span>
               </button>
 
               <button
@@ -241,11 +233,11 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                 }}
                 className={`py-2 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                   identityMode === "ALIAS"
-                    ? "bg-indigo-600 text-white border-indigo-500"
+                    ? "bg-zinc-100 text-zinc-950 border-white font-semibold"
                     : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                 }`}
               >
-                <span>🎭 Alias</span>
+                <span>Alias</span>
               </button>
             </div>
 
@@ -256,7 +248,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                   placeholder="Choose alias (or roll random)..."
                   value={aliasName}
                   onChange={(e) => setAliasName(e.target.value)}
-                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
+                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
                 />
                 <button
                   type="button"
@@ -272,24 +264,24 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
 
           {/* Community Selection */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-400">Target Community</label>
+            <label className="text-xs font-semibold text-zinc-400">Target Room</label>
             <select
               value={communityId}
               onChange={(e) => setCommunityId(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500"
+              className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
             >
               {communities.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.icon} {c.name} — {c.description}
+                  {c.name} — {c.description}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Title (for Questions, Debates, Confessions, Stories, Achievements) */}
+          {/* Title */}
           {postType !== "THOUGHT" && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-zinc-400">Headline / Topic</label>
+              <label className="text-xs font-semibold text-zinc-400">Topic / Headline</label>
               <input
                 type="text"
                 placeholder={
@@ -301,32 +293,32 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                 }
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-purple-500"
+                className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
               />
             </div>
           )}
 
           {/* Debate Specific Sides */}
           {postType === "DEBATE" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-orange-950/20 border border-orange-900/30">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-zinc-900/60 border border-zinc-800">
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-semibold text-emerald-400">Agree Position</label>
+                <label className="text-[11px] font-semibold text-zinc-300">Agree Position</label>
                 <input
                   type="text"
                   placeholder="Supporting argument..."
                   value={agreeTitle}
                   onChange={(e) => setAgreeTitle(e.target.value)}
-                  className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:border-emerald-500"
+                  className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:border-zinc-500"
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-semibold text-rose-400">Disagree Position</label>
+                <label className="text-[11px] font-semibold text-zinc-400">Disagree Position</label>
                 <input
                   type="text"
                   placeholder="Counter argument..."
                   value={disagreeTitle}
                   onChange={(e) => setDisagreeTitle(e.target.value)}
-                  className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:border-rose-500"
+                  className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:border-zinc-500"
                 />
               </div>
             </div>
@@ -345,17 +337,17 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
               placeholder="What's genuinely on your mind? Share without holding back..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs sm:text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-purple-500 resize-none leading-relaxed"
+              className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs sm:text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 resize-none leading-relaxed"
             />
           </div>
 
-          {/* Compassionate Support Notice for Vulnerable / Mental Health Posts */}
+          {/* Compassionate Support Notice for Vulnerable Posts */}
           {isCrisisTopic && (
-            <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-800/50 flex items-start gap-2.5 text-xs text-indigo-200">
-              <HeartHandshake className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-start gap-2.5 text-xs text-zinc-300">
+              <HeartHandshake className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-indigo-100">You are safe here.</p>
-                <p className="text-[11px] text-indigo-300/80 mt-0.5 leading-relaxed">
+                <p className="font-semibold text-zinc-100">You are safe here.</p>
+                <p className="text-[11px] text-zinc-400 mt-0.5 leading-relaxed">
                   If you are experiencing severe crisis or loneliness, remember support is always
                   available. Text or call <strong>988</strong> (free, confidential 24/7 lifeline).
                 </p>
@@ -365,39 +357,25 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
 
           {/* Tags */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-400">
-              Tags (comma separated)
-            </label>
+            <label className="text-xs font-semibold text-zinc-400">Tags (comma separated)</label>
             <input
               type="text"
               placeholder="e.g. Career, Startups, MentalHealth"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-purple-500"
+              className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
             />
           </div>
 
           {/* Constructive AI Mirror Banner */}
           {aiFeedback && aiFeedback.suggestion && (
-            <div
-              className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
-                !aiFeedback.isSafe
-                  ? "bg-rose-950/40 border-rose-800/80 text-rose-200"
-                  : aiFeedback.category === "PII"
-                  ? "bg-amber-950/40 border-amber-800/80 text-amber-200"
-                  : "bg-purple-950/40 border-purple-800/80 text-purple-200"
-              }`}
-            >
-              {!aiFeedback.isSafe ? (
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              )}
+            <div className="p-3 rounded-xl border border-zinc-800 bg-zinc-900 flex items-start gap-2.5 text-xs text-zinc-300">
+              <AlertTriangle className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium leading-relaxed">{aiFeedback.suggestion}</p>
+                <p className="font-medium leading-relaxed">{aiFeedback.suggestion.replace(/[🛡️⚠️💡⛔]/g, "")}</p>
                 {!aiFeedback.isSafe && (
-                  <p className="text-[11px] text-rose-300/80 mt-1 font-semibold">
-                    You must resolve safety flags before posting.
+                  <p className="text-[11px] text-zinc-400 mt-1 font-semibold font-mono">
+                    Please resolve safety flags before posting.
                   </p>
                 )}
               </div>
@@ -416,9 +394,9 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
             <button
               type="submit"
               disabled={!content.trim() || (aiFeedback !== null && !aiFeedback.isSafe)}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:hover:from-purple-600 text-white shadow-lg shadow-purple-950/50 transition-all active:scale-98"
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-white disabled:opacity-40 text-zinc-950 transition-all active:scale-98"
             >
-              Publish Thought (+15 XP)
+              Publish Thought
             </button>
           </div>
         </form>
