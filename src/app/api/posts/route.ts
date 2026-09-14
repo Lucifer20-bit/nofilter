@@ -102,12 +102,18 @@ export async function GET(request: Request) {
         agreeCount: post.agreeCount,
         disagreeCount: post.disagreeCount,
         reactions: {
-          helpful: post.helpfulCount,
-          insightful: post.insightfulCount,
-          wellSaid: post.wellSaidCount,
-          madeMeThink: post.madeMeThinkCount,
+          helpful: post.helpfulCount ?? 0,
+          insightful: post.insightfulCount ?? 0,
+          wellSaid: post.wellSaidCount ?? 0,
+          madeMeThink: post.madeMeThinkCount ?? 0,
         },
-        commentsCount: post.commentCount,
+        userReactions: {
+          helpful: false,
+          insightful: false,
+          wellSaid: false,
+          madeMeThink: false,
+        },
+        commentsCount: post.commentCount ?? 0,
         createdAt: post.createdAt.toISOString(),
         comments: sanitizedComments,
       };

@@ -42,9 +42,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
   };
 
   // Debate stats
-  const totalDebateVotes = post.agreeCount + post.disagreeCount;
-  const agreePct = totalDebateVotes > 0 ? Math.round((post.agreeCount / totalDebateVotes) * 100) : 50;
+  const totalDebateVotes = (post.agreeCount || 0) + (post.disagreeCount || 0);
+  const agreePct = totalDebateVotes > 0 ? Math.round(((post.agreeCount || 0) / totalDebateVotes) * 100) : 50;
   const disagreePct = 100 - agreePct;
+
+  const userReactions = post.userReactions || {
+    helpful: false,
+    insightful: false,
+    wellSaid: false,
+    madeMeThink: false,
+  };
+
+  const reactions = post.reactions || {
+    helpful: 0,
+    insightful: 0,
+    wellSaid: 0,
+    madeMeThink: 0,
+  };
 
   return (
     <article className="p-5 rounded-2xl bg-zinc-950/60 hover:bg-zinc-950 border border-zinc-800/80 transition-all flex flex-col gap-4">
@@ -239,13 +253,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
           <button
             onClick={() => toggleReaction(post.id, "helpful")}
             className={`px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all border ${
-              post.userReactions.helpful
+              userReactions.helpful
                 ? "bg-zinc-800 border-zinc-600 text-white"
                 : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <Lightbulb className="w-3.5 h-3.5" />
-            <span className="font-mono font-semibold">{post.reactions.helpful}</span>
+            <span className="font-mono font-semibold">{reactions.helpful}</span>
             <span className="hidden sm:inline text-[11px]">Helpful</span>
           </button>
 
@@ -253,13 +267,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
           <button
             onClick={() => toggleReaction(post.id, "insightful")}
             className={`px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all border ${
-              post.userReactions.insightful
+              userReactions.insightful
                 ? "bg-zinc-800 border-zinc-600 text-white"
                 : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="font-mono font-semibold">{post.reactions.insightful}</span>
+            <span className="font-mono font-semibold">{reactions.insightful}</span>
             <span className="hidden sm:inline text-[11px]">Insightful</span>
           </button>
 
@@ -267,13 +281,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
           <button
             onClick={() => toggleReaction(post.id, "wellSaid")}
             className={`px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all border ${
-              post.userReactions.wellSaid
+              userReactions.wellSaid
                 ? "bg-zinc-800 border-zinc-600 text-white"
                 : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <Check className="w-3.5 h-3.5" />
-            <span className="font-mono font-semibold">{post.reactions.wellSaid}</span>
+            <span className="font-mono font-semibold">{reactions.wellSaid}</span>
             <span className="hidden sm:inline text-[11px]">Well Said</span>
           </button>
 
@@ -281,13 +295,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
           <button
             onClick={() => toggleReaction(post.id, "madeMeThink")}
             className={`px-3 py-1.5 rounded-xl font-medium flex items-center gap-1.5 transition-all border ${
-              post.userReactions.madeMeThink
+              userReactions.madeMeThink
                 ? "bg-zinc-800 border-zinc-600 text-white"
                 : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-zinc-200"
             }`}
           >
             <Brain className="w-3.5 h-3.5" />
-            <span className="font-mono font-semibold">{post.reactions.madeMeThink}</span>
+            <span className="font-mono font-semibold">{reactions.madeMeThink}</span>
             <span className="hidden sm:inline text-[11px]">Thought-Provoking</span>
           </button>
         </div>

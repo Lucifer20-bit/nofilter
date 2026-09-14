@@ -60,8 +60,8 @@ export default function FeedPage() {
   // Sort based on Tab
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     if (activeTab === "TRENDING") {
-      const aScore = a.reactions.helpful + a.reactions.madeMeThink * 2 + a.commentsCount;
-      const bScore = b.reactions.helpful + b.reactions.madeMeThink * 2 + b.commentsCount;
+      const aScore = (a.reactions?.helpful || 0) + (a.reactions?.madeMeThink || 0) * 2 + (a.commentsCount || 0);
+      const bScore = (b.reactions?.helpful || 0) + (b.reactions?.madeMeThink || 0) * 2 + (b.commentsCount || 0);
       return bScore - aScore;
     }
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();

@@ -106,8 +106,8 @@ export const SidebarRight: React.FC = () => {
                 {q.title || q.content}
               </p>
               <div className="flex items-center justify-between text-[11px] text-zinc-500 mt-1">
-                <span>{q.commentsCount} answers</span>
-                <span>{q.reactions.helpful} helpful</span>
+                <span>{q.commentsCount || 0} answers</span>
+                <span>{q.reactions?.helpful || 0} helpful</span>
               </div>
             </div>
           ))}
