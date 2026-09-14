@@ -1,0 +1,104 @@
+"use client";
+
+import React, { useState } from "react";
+import { Shell } from "@/components/layout/Shell";
+import { useNofilterStore } from "@/lib/store";
+import { Compass, Users, ArrowRight, MessageSquareQuote, Check } from "lucide-react";
+import Link from "next/link";
+
+export default function CommunitiesPage() {
+  const { communities, posts } = useNofilterStore();
+  const [joined, setJoined] = useState<Record<string, boolean>>({
+    comm_tech: true,
+    comm_career: true,
+  });
+
+  const toggleJoin = (id: string) => {
+    setJoined((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  return (
+    <Shell>
+      <div className="flex flex-col gap-6 p-4 sm:p-6">
+        {/* Header */}
+        <div className="pb-4 border-b border-zinc-800">
+          <div className="flex items-center gap-2 text-purple-400">
+            <Compass className="w-6 h-6" />
+            <h1 className="text-xl sm:text-2xl font-black text-zinc-100">
+              Explore Focused Communities
+            </h1>
+          </div>
+          <p className="text-xs text-zinc-400 mt-1">
+            Authentic spaces dedicated to what you care about. No endless irrelevant algorithmic noise.
+          </p>
+        </div>
+
+        {/* Communities Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {communities.map((community) => {
+            const isMember = !!joined[community.id];
+            const communityPosts = posts.filter((p) => p.communityId === community.id);
+
+            return (
+              <div
+                key={community.id}
+                className="p-5 rounded-2xl bg-zinc-900/30 hover:bg-zinc-900/50 border border-zinc-800/80 transition-all flex flex-col justify-between gap-4"
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl shadow-md">
+                        {community.icon}
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-zinc-100">{community.name}</h2>
+                        <span className="text-xs text-zinc-500 font-medium flex items-center gap-1 mt-0.5">
+                          <Users className="w-3 h-3" />
+                          {(community.memberCount / 1000).toFixed(1)}k members
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => toggleJoin(community.id)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all border ${
+                        isMember
+                          ? "bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:bg-rose-950/30 hover:border-rose-800/40 hover:text-rose-300"
+                          : "bg-purple-600 border-purple-500 text-white hover:bg-purple-500 shadow-md shadow-purple-950/40"
+                      }`}
+                    >
+                      {isMember ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span>Joined</span>
+                        </>
+                      ) : (
+                        <span>Join</span>
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    {community.description}
+                  </p>
+                </div>
+
+                {/* Recent Snippet */}
+                {communityPosts.length > 0 && (
+                  <div className="p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-xs">
+                    <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">
+                      Latest Discussion
+                    </span>
+                    <p className="text-zinc-300 font-medium line-clamp-1">
+                      "{communityPosts[0].title || communityPosts[0].content}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Shell>
+  );
+}
