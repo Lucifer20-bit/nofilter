@@ -5,19 +5,27 @@ import { Shell } from "@/components/layout/Shell";
 import { FeedHeader, FeedTab, PostFilter } from "@/components/feed/FeedHeader";
 import { PostCard } from "@/components/post/PostCard";
 import { useNofilterStore } from "@/lib/store";
-import { Sparkles, MessageCircle, PenLine } from "lucide-react";
+import { MessageCircle, PenLine, Sparkles, SearchX } from "lucide-react";
 import { CreatePostModal } from "@/components/post/CreatePostModal";
 import { ReportModal } from "@/components/moderation/ReportModal";
 
 export default function HomePage() {
-  const { posts } = useNofilterStore();
+  const { posts, communities, selectedCommunityId, setSelectedCommunityId } = useNofilterStore();
   const [activeTab, setActiveTab] = useState<FeedTab>("FOR_YOU");
   const [activeFilter, setActiveFilter] = useState<PostFilter>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
 
-  // Filter posts based on active Tab and format filter
+  const activeCommunity = communities.find((c) => c.id === selectedCommunityId);
+
+  // Filter posts based on active Tab, format filter, search query, and community
   const filteredPosts = posts.filter((p) => {
+    // Community filter
+    if (selectedCommunityId && p.communityId !== selectedCommunityId) {
+      return false;
+    }
+
     // Content format filter
     if (activeFilter !== "ALL" && p.postType !== activeFilter) {
       return false;
@@ -30,6 +38,21 @@ export default function HomePage() {
     if (activeTab === "QUESTIONS" && p.postType !== "QUESTION") {
       return false;
     }
+
+    // Live search query matching
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const inTitle = p.title?.toLowerCase().includes(q);
+      const inContent = p.content.toLowerCase().includes(q);
+      const inTags = p.tags?.some((t) => t.toLowerCase().includes(q));
+      const inCommunity = p.communityName.toLowerCase().includes(q);
+      const inAuthor = p.authorName.toLowerCase().includes(q) || p.aliasName?.toLowerCase().includes(q);
+
+      if (!inTitle && !inContent && !inTags && !inCommunity && !inAuthor) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -40,19 +63,22 @@ export default function HomePage() {
       const bScore = b.reactions.helpful + b.reactions.madeMeThink * 2 + b.commentsCount;
       return bScore - aScore;
     }
-    // Default: Newest first
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   return (
     <Shell>
       <div className="flex flex-col min-h-screen">
-        {/* Feed Header with Tabs and Format Pills */}
+        {/* Feed Header with Search, Tabs, Community Badge and Format Pills */}
         <FeedHeader
           activeTab={activeTab}
           onTabChange={setActiveTab}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCommunityName={activeCommunity?.name}
+          onClearCommunity={() => setSelectedCommunityId(null)}
         />
 
         {/* Quick Thought Composer Banner */}
@@ -62,7 +88,7 @@ export default function HomePage() {
             className="p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800/80 hover:border-purple-500/40 cursor-pointer transition-all flex items-center justify-between gap-3 text-zinc-400 group"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-purple-950/60 border border-purple-800/40 flex items-center justify-center text-purple-400 text-sm">
+              <div className="w-8 h-8 rounded-full bg-purple-950/60 border border-purple-800/40 flex items-center justify-center text-purple-400 text-sm shadow-inner">
                 <PenLine className="w-4 h-4" />
               </div>
               <span className="text-xs sm:text-sm text-zinc-400 group-hover:text-zinc-200">
@@ -81,17 +107,27 @@ export default function HomePage() {
           {sortedPosts.length === 0 ? (
             <div className="py-16 text-center flex flex-col items-center justify-center gap-3 bg-zinc-900/20 rounded-2xl border border-zinc-800/80 p-6">
               <div className="w-12 h-12 rounded-2xl bg-zinc-800/60 flex items-center justify-center text-zinc-400">
-                <MessageCircle className="w-6 h-6" />
+                {searchQuery ? <SearchX className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
               </div>
-              <h3 className="font-bold text-sm text-zinc-200">No conversations in this filter yet</h3>
+              <h3 className="font-bold text-sm text-zinc-200">
+                {searchQuery
+                  ? `No discussions match "${searchQuery}"`
+                  : "No conversations in this filter yet"}
+              </h3>
               <p className="text-xs text-zinc-400 max-w-sm">
-                Be the first to share an authentic question, confession, or debate in this category.
+                {searchQuery
+                  ? "Try searching for another topic or hashtag, or be the first to start this thread."
+                  : "Be the first to share an authentic question, confession, or debate in this category."}
               </p>
               <button
-                onClick={() => setIsComposerOpen(true)}
-                className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white hover:bg-purple-500 transition-colors"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCommunityId(null);
+                  setActiveFilter("ALL");
+                }}
+                className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white hover:bg-purple-500 transition-colors shadow-md shadow-purple-950/50"
               >
-                Start Conversation
+                Reset All Filters
               </button>
             </div>
           ) : (

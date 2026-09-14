@@ -39,13 +39,29 @@ export const INITIAL_REPORTS: ReportItem[] = [
   },
 ];
 
-// In-memory global state holder for browser sessions
+const STORAGE_KEYS = {
+  POSTS: "nofilter_posts_v1",
+  USER: "nofilter_user_v1",
+  REPORTS: "nofilter_reports_v1",
+};
+
+// In-memory global state
 let globalPosts = [...INITIAL_POSTS];
 let globalUser = { ...CURRENT_USER };
 let globalReports = [...INITIAL_REPORTS];
+let isHydrated = false;
 const listeners = new Set<() => void>();
 
 function notify() {
+  if (typeof window !== "undefined" && isHydrated) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(globalPosts));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(globalUser));
+      localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(globalReports));
+    } catch (e) {
+      console.warn("LocalStorage save error:", e);
+    }
+  }
   listeners.forEach((listener) => listener());
 }
 
@@ -54,20 +70,51 @@ export function useNofilterStore() {
   const [user, setUser] = useState<UserProfile>(globalUser);
   const [reports, setReports] = useState<ReportItem[]>(globalReports);
   const [communities] = useState<CommunityItem[]>(INITIAL_COMMUNITIES);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Hydrate from localStorage once on client mount
+    if (!isHydrated && typeof window !== "undefined") {
+      try {
+        const storedPosts = localStorage.getItem(STORAGE_KEYS.POSTS);
+        const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+        const storedReports = localStorage.getItem(STORAGE_KEYS.REPORTS);
+
+        if (storedPosts) globalPosts = JSON.parse(storedPosts);
+        if (storedUser) globalUser = JSON.parse(storedUser);
+        if (storedReports) globalReports = JSON.parse(storedReports);
+      } catch (e) {
+        console.warn("LocalStorage load error:", e);
+      }
+      isHydrated = true;
+    }
+
     const handler = () => {
       setPosts([...globalPosts]);
       setUser({ ...globalUser });
       setReports([...globalReports]);
     };
     listeners.add(handler);
+    handler(); // initial sync
+
     return () => {
       listeners.delete(handler);
     };
   }, []);
 
-  const addPost = (newPost: Omit<PostItem, "id" | "createdAt" | "reactions" | "userReactions" | "commentsCount" | "comments" | "agreeCount" | "disagreeCount">) => {
+  const addPost = (
+    newPost: Omit<
+      PostItem,
+      | "id"
+      | "createdAt"
+      | "reactions"
+      | "userReactions"
+      | "commentsCount"
+      | "comments"
+      | "agreeCount"
+      | "disagreeCount"
+    >
+  ) => {
     const created: PostItem = {
       ...newPost,
       id: `post_${Date.now()}`,
@@ -129,7 +176,6 @@ export function useNofilterStore() {
     globalPosts = globalPosts.map((p) => {
       if (p.id !== postId) return p;
       if (p.userVote === stance) {
-        // Toggle off
         return {
           ...p,
           userVote: null,
@@ -137,7 +183,6 @@ export function useNofilterStore() {
           disagreeCount: stance === "DISAGREE" ? p.disagreeCount - 1 : p.disagreeCount,
         };
       } else {
-        // Vote or switch
         let newAgree = p.agreeCount;
         let newDisagree = p.disagreeCount;
 
@@ -168,7 +213,12 @@ export function useNofilterStore() {
       id: `c_${Date.now()}`,
       postId,
       authorId: globalUser.id,
-      authorName: identityMode === "ANONYMOUS" ? "Anonymous" : identityMode === "ALIAS" ? (aliasName || "CuriousThinker") : globalUser.displayName,
+      authorName:
+        identityMode === "ANONYMOUS"
+          ? "Anonymous"
+          : identityMode === "ALIAS"
+          ? aliasName || "CuriousThinker"
+          : globalUser.displayName,
       authorAvatar: identityMode === "PROFILE" ? globalUser.avatarUrl : undefined,
       identityMode,
       aliasName,
@@ -187,6 +237,24 @@ export function useNofilterStore() {
     });
 
     globalUser.xp += 10;
+    notify();
+  };
+
+  const awardDelta = (postId: string, commentId: string) => {
+    globalPosts = globalPosts.map((p) => {
+      if (p.id !== postId) return p;
+      return {
+        ...p,
+        comments: p.comments.map((c) => {
+          if (c.id !== commentId) return c;
+          return {
+            ...c,
+            helpfulCount: c.helpfulCount + 5,
+          };
+        }),
+      };
+    });
+    globalUser.xp += 20;
     notify();
   };
 
@@ -214,7 +282,6 @@ export function useNofilterStore() {
   const resolveReport = (reportId: string, action: "DISMISS" | "REMOVE") => {
     const rep = globalReports.find((r) => r.id === reportId);
     if (rep && action === "REMOVE") {
-      // Remove the reported post from feed
       globalPosts = globalPosts.filter((p) => p.id !== rep.postId);
     }
     globalReports = globalReports.map((r) =>
@@ -223,16 +290,30 @@ export function useNofilterStore() {
     notify();
   };
 
+  const resetData = () => {
+    globalPosts = [...INITIAL_POSTS];
+    globalUser = { ...CURRENT_USER };
+    globalReports = [...INITIAL_REPORTS];
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
+    notify();
+  };
+
   return {
     posts,
     user,
     reports,
     communities,
+    selectedCommunityId,
+    setSelectedCommunityId,
     addPost,
     toggleReaction,
     voteDebate,
     addComment,
+    awardDelta,
     submitReport,
     resolveReport,
+    resetData,
   };
 }

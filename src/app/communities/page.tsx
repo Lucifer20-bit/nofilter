@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Shell } from "@/components/layout/Shell";
 import { useNofilterStore } from "@/lib/store";
 import { Compass, Users, ArrowRight, MessageSquareQuote, Check } from "lucide-react";
-import Link from "next/link";
 
 export default function CommunitiesPage() {
-  const { communities, posts } = useNofilterStore();
+  const router = useRouter();
+  const { communities, posts, setSelectedCommunityId } = useNofilterStore();
   const [joined, setJoined] = useState<Record<string, boolean>>({
     comm_tech: true,
     comm_career: true,
@@ -15,6 +16,11 @@ export default function CommunitiesPage() {
 
   const toggleJoin = (id: string) => {
     setJoined((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleEnterCommunity = (id: string) => {
+    setSelectedCommunityId(id);
+    router.push("/");
   };
 
   return (
@@ -42,16 +48,21 @@ export default function CommunitiesPage() {
             return (
               <div
                 key={community.id}
-                className="p-5 rounded-2xl bg-zinc-900/30 hover:bg-zinc-900/50 border border-zinc-800/80 transition-all flex flex-col justify-between gap-4"
+                className="p-5 rounded-2xl bg-zinc-900/30 hover:bg-zinc-900/50 border border-zinc-800/80 transition-all flex flex-col justify-between gap-4 group"
               >
                 <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl shadow-md">
+                    <div
+                      onClick={() => handleEnterCommunity(community.id)}
+                      className="flex items-center gap-3 cursor-pointer"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition-transform">
                         {community.icon}
                       </div>
                       <div>
-                        <h2 className="text-base font-bold text-zinc-100">{community.name}</h2>
+                        <h2 className="text-base font-bold text-zinc-100 group-hover:text-purple-300 transition-colors">
+                          {community.name}
+                        </h2>
                         <span className="text-xs text-zinc-500 font-medium flex items-center gap-1 mt-0.5">
                           <Users className="w-3 h-3" />
                           {(community.memberCount / 1000).toFixed(1)}k members
@@ -83,17 +94,30 @@ export default function CommunitiesPage() {
                   </p>
                 </div>
 
-                {/* Recent Snippet */}
-                {communityPosts.length > 0 && (
-                  <div className="p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-xs">
-                    <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">
-                      Latest Discussion
-                    </span>
-                    <p className="text-zinc-300 font-medium line-clamp-1">
-                      "{communityPosts[0].title || communityPosts[0].content}"
-                    </p>
-                  </div>
-                )}
+                {/* Recent Snippet & Link to Feed */}
+                <div className="flex flex-col gap-2 pt-2 border-t border-zinc-800/60">
+                  {communityPosts.length > 0 && (
+                    <div
+                      onClick={() => handleEnterCommunity(community.id)}
+                      className="p-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/60 text-xs cursor-pointer hover:border-purple-500/40 transition-colors"
+                    >
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-0.5">
+                        Latest Discussion
+                      </span>
+                      <p className="text-zinc-300 font-medium line-clamp-1">
+                        "{communityPosts[0].title || communityPosts[0].content}"
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleEnterCommunity(community.id)}
+                    className="w-full py-2 px-3 rounded-xl bg-zinc-800/60 hover:bg-purple-600 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <span>View Room Discussions</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             );
           })}

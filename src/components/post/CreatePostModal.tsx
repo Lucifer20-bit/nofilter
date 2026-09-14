@@ -8,8 +8,8 @@ import {
   EyeOff,
   UserCheck,
   AlertTriangle,
-  Info,
-  Flame,
+  HeartHandshake,
+  Dice5,
 } from "lucide-react";
 import { useNofilterStore } from "@/lib/store";
 import { checkPreFlightContent } from "@/lib/moderation";
@@ -18,6 +18,22 @@ import { PostItem } from "@/lib/mock-data";
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+const PSEUDONYM_PREFIXES = [
+  "Curious", "Midnight", "Silent", "Thoughtful", "Stoic", "Wandering",
+  "Observant", "Vulnerable", "Bold", "Restless", "Deep", "Gentle"
+];
+const PSEUDONYM_NOUNS = [
+  "Thinker", "Fox", "Cipher", "Philosopher", "Engineer", "Wanderer",
+  "Scholar", "Owl", "Voice", "Seeker", "Builder", "Spectator"
+];
+
+function generateRandomAlias(): string {
+  const prefix = PSEUDONYM_PREFIXES[Math.floor(Math.random() * PSEUDONYM_PREFIXES.length)];
+  const noun = PSEUDONYM_NOUNS[Math.floor(Math.random() * PSEUDONYM_NOUNS.length)];
+  const num = Math.floor(Math.random() * 90) + 10;
+  return `${prefix}${noun}#${num}`;
 }
 
 export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose }) => {
@@ -37,10 +53,26 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
   // Tags
   const [tagInput, setTagInput] = useState("");
 
+  const handleRollAlias = () => {
+    setAliasName(generateRandomAlias());
+  };
+
   // Live Pre-flight AI Mirror evaluation
   const aiFeedback = useMemo(() => {
     if (!content.trim()) return null;
     return checkPreFlightContent(content, postType);
+  }, [content, postType]);
+
+  const isCrisisTopic = useMemo(() => {
+    const lower = content.toLowerCase();
+    return (
+      postType === "CONFESSION" ||
+      lower.includes("depress") ||
+      lower.includes("suicid") ||
+      lower.includes("alone") ||
+      lower.includes("paralyzed") ||
+      lower.includes("hopeless")
+    );
   }, [content, postType]);
 
   if (!isOpen) return null;
@@ -66,16 +98,18 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
       communitySlug: selectedComm.slug,
       postType,
       identityMode,
-      aliasName: identityMode === "ALIAS" ? aliasName || "AnonymousSage" : undefined,
+      aliasName:
+        identityMode === "ALIAS" ? aliasName || generateRandomAlias() : undefined,
       title: title.trim() || undefined,
       content: content.trim(),
       tags: tags.length > 0 ? tags : [selectedComm.slug],
-      debateAgreeTitle: postType === "DEBATE" ? agreeTitle.trim() || "Agree with statement" : undefined,
-      debateDisagreeTitle: postType === "DEBATE" ? disagreeTitle.trim() || "Disagree with statement" : undefined,
+      debateAgreeTitle:
+        postType === "DEBATE" ? agreeTitle.trim() || "Agree with statement" : undefined,
+      debateDisagreeTitle:
+        postType === "DEBATE" ? disagreeTitle.trim() || "Disagree with statement" : undefined,
       userVote: null,
     });
 
-    // Reset and close
     setTitle("");
     setContent("");
     setAgreeTitle("");
@@ -95,7 +129,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl p-5 sm:p-6 flex flex-col gap-5">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
@@ -147,18 +181,28 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
           </div>
 
           {/* Identity Mode Selector */}
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800 flex flex-col gap-2">
+          <div
+            className={`p-3 rounded-xl border flex flex-col gap-2.5 transition-all ${
+              identityMode === "ANONYMOUS"
+                ? "bg-rose-950/20 border-rose-800/60"
+                : "bg-zinc-900/50 border-zinc-800"
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-purple-400" />
-                Post Identity:
+                <Shield
+                  className={`w-3.5 h-3.5 ${
+                    identityMode === "ANONYMOUS" ? "text-rose-400" : "text-purple-400"
+                  }`}
+                />
+                Post Identity Mode:
               </span>
-              <span className="text-[11px] text-zinc-500">
+              <span className="text-[11px] text-zinc-400">
                 {identityMode === "ANONYMOUS"
-                  ? "Public name hidden • Backend audited"
+                  ? "🔒 Identity completely shielded to public"
                   : identityMode === "ALIAS"
-                  ? "Temporary thread alias"
-                  : "Posting as @" + user.username}
+                  ? "🎭 Per-thread ephemeral pseudonym"
+                  : "Public as @" + user.username}
               </span>
             </div>
 
@@ -181,7 +225,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
                 onClick={() => setIdentityMode("ANONYMOUS")}
                 className={`py-2 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                   identityMode === "ANONYMOUS"
-                    ? "bg-rose-700 text-white border-rose-600"
+                    ? "bg-rose-700 text-white border-rose-600 shadow-md shadow-rose-950/50"
                     : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                 }`}
               >
@@ -191,7 +235,10 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
 
               <button
                 type="button"
-                onClick={() => setIdentityMode("ALIAS")}
+                onClick={() => {
+                  setIdentityMode("ALIAS");
+                  if (!aliasName) setAliasName(generateRandomAlias());
+                }}
                 className={`py-2 px-3 rounded-lg text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                   identityMode === "ALIAS"
                     ? "bg-indigo-600 text-white border-indigo-500"
@@ -203,13 +250,23 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
             </div>
 
             {identityMode === "ALIAS" && (
-              <input
-                type="text"
-                placeholder="Choose a temporary pseudonym (e.g. MidnightPhilosopher)..."
-                value={aliasName}
-                onChange={(e) => setAliasName(e.target.value)}
-                className="w-full mt-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-purple-500"
-              />
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  placeholder="Choose alias (or roll random)..."
+                  value={aliasName}
+                  onChange={(e) => setAliasName(e.target.value)}
+                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleRollAlias}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5 transition-colors border border-zinc-700"
+                >
+                  <Dice5 className="w-3.5 h-3.5" />
+                  <span>Roll</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -277,7 +334,12 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
 
           {/* Content Body */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-zinc-400">Body & Context</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-zinc-400">Body & Context</label>
+              <span className="text-[11px] text-zinc-500 font-mono">
+                {content.length} characters
+              </span>
+            </div>
             <textarea
               rows={4}
               placeholder="What's genuinely on your mind? Share without holding back..."
@@ -286,6 +348,20 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
               className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs sm:text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-purple-500 resize-none leading-relaxed"
             />
           </div>
+
+          {/* Compassionate Support Notice for Vulnerable / Mental Health Posts */}
+          {isCrisisTopic && (
+            <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-800/50 flex items-start gap-2.5 text-xs text-indigo-200">
+              <HeartHandshake className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-indigo-100">You are safe here.</p>
+                <p className="text-[11px] text-indigo-300/80 mt-0.5 leading-relaxed">
+                  If you are experiencing severe crisis or loneliness, remember support is always
+                  available. Text or call <strong>988</strong> (free, confidential 24/7 lifeline).
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Tags */}
           <div className="flex flex-col gap-1.5">
@@ -301,7 +377,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
             />
           </div>
 
-          {/* Constructive AI Mirror Banner (Pre-Flight Safety Check) */}
+          {/* Constructive AI Mirror Banner */}
           {aiFeedback && aiFeedback.suggestion && (
             <div
               className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
@@ -340,7 +416,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
             <button
               type="submit"
               disabled={!content.trim() || (aiFeedback !== null && !aiFeedback.isSafe)}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:hover:from-purple-600 text-white shadow-lg shadow-purple-950/50 transition-all"
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 disabled:hover:from-purple-600 text-white shadow-lg shadow-purple-950/50 transition-all active:scale-98"
             >
               Publish Thought (+15 XP)
             </button>

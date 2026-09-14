@@ -2,17 +2,24 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Flame, HelpCircle, Users, ExternalLink, ShieldAlert } from "lucide-react";
 import { useNofilterStore } from "@/lib/store";
 
 export const SidebarRight: React.FC = () => {
-  const { posts, communities, voteDebate } = useNofilterStore();
+  const router = useRouter();
+  const { posts, communities, voteDebate, setSelectedCommunityId } = useNofilterStore();
 
   const debatePosts = posts.filter((p) => p.postType === "DEBATE");
   const questionPosts = posts.filter((p) => p.postType === "QUESTION").slice(0, 3);
 
+  const handleSelectCommunity = (id: string) => {
+    setSelectedCommunityId(id);
+    router.push("/");
+  };
+
   return (
-    <aside className="hidden xl:flex flex-col gap-6 w-80 h-screen sticky top-0 p-4 border-l border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md overflow-y-auto">
+    <aside className="hidden xl:flex flex-col gap-6 w-80 h-screen sticky top-0 p-4 border-l border-zinc-800/80 bg-zinc-950/40 backdrop-blur-md overflow-y-auto select-none">
       {/* Trending Debates Card */}
       {debatePosts.length > 0 && (
         <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex flex-col gap-3">
@@ -89,7 +96,8 @@ export const SidebarRight: React.FC = () => {
           {questionPosts.map((q) => (
             <div
               key={q.id}
-              className="group p-2.5 rounded-xl hover:bg-zinc-800/40 transition-colors border border-transparent hover:border-zinc-800"
+              onClick={() => handleSelectCommunity(q.communityId)}
+              className="group p-2.5 rounded-xl hover:bg-zinc-800/40 transition-colors border border-transparent hover:border-zinc-800 cursor-pointer"
             >
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 {q.communityName}
@@ -125,28 +133,31 @@ export const SidebarRight: React.FC = () => {
           {communities.slice(0, 4).map((c) => (
             <div
               key={c.id}
-              className="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-800/30 transition-colors"
+              onClick={() => handleSelectCommunity(c.id)}
+              className="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-800/50 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-sm">
+                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-sm shadow-sm">
                   {c.icon}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-zinc-200 truncate">{c.name}</p>
+                  <p className="text-xs font-semibold text-zinc-200 truncate hover:text-purple-300">
+                    {c.name}
+                  </p>
                   <p className="text-[10px] text-zinc-500">
                     {(c.memberCount / 1000).toFixed(1)}k members
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-purple-400 hover:underline cursor-pointer">
-                Join
+              <span className="text-[11px] font-semibold text-purple-400 hover:underline">
+                Filter
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Core Security & Authenticity Philosophy Footer */}
+      {/* Philosophy Footer */}
       <div className="p-3 text-[11px] text-zinc-400 rounded-xl bg-purple-950/20 border border-purple-900/30 flex items-start gap-2">
         <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
         <p>

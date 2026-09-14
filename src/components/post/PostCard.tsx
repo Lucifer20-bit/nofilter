@@ -8,6 +8,7 @@ import {
   ShieldAlert,
   Flame,
   CheckCircle2,
+  Bookmark,
 } from "lucide-react";
 import { PostItem } from "@/lib/mock-data";
 import { useNofilterStore } from "@/lib/store";
@@ -23,6 +24,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
   const { toggleReaction, voteDebate } = useNofilterStore();
   const [showComments, setShowComments] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const typeMeta = getPostTypeColor(post.postType);
@@ -45,11 +47,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {post.identityMode === "ANONYMOUS" ? (
-            <div className="w-10 h-10 rounded-full bg-rose-950/60 border border-rose-800/40 flex items-center justify-center text-rose-300 text-lg shadow-inner">
+            <div className="w-10 h-10 rounded-full bg-rose-950/60 border border-rose-800/40 flex items-center justify-center text-rose-300 text-lg shadow-inner ring-1 ring-rose-500/20">
               🤫
             </div>
           ) : post.identityMode === "ALIAS" ? (
-            <div className="w-10 h-10 rounded-full bg-purple-950/60 border border-purple-800/40 flex items-center justify-center text-purple-300 text-lg shadow-inner">
+            <div className="w-10 h-10 rounded-full bg-purple-950/60 border border-purple-800/40 flex items-center justify-center text-purple-300 text-lg shadow-inner ring-1 ring-purple-500/20">
               🎭
             </div>
           ) : (
@@ -97,6 +99,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
             <span>{typeMeta.icon}</span>
             <span className="capitalize">{post.postType.toLowerCase()}</span>
           </span>
+
+          <button
+            onClick={() => setIsBookmarked(!isBookmarked)}
+            className={`p-1 rounded-lg transition-colors ${
+              isBookmarked ? "text-purple-400" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+            title={isBookmarked ? "Saved" : "Save discussion"}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-purple-400" : ""}`} />
+          </button>
 
           <button
             onClick={() => setShowActionsMenu(!showActionsMenu)}
@@ -215,7 +227,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
         </div>
       )}
 
-      {/* Meaningful Reactions Bar (No Simple Likes) */}
+      {/* Meaningful Reactions Bar */}
       <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between flex-wrap gap-2 text-xs">
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {/* Helpful */}
@@ -295,6 +307,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenReport }) => {
         <div className="pt-2 border-t border-zinc-800/60">
           <ThreadedComments
             postId={post.id}
+            isDebate={post.postType === "DEBATE"}
             comments={post.comments}
           />
         </div>
