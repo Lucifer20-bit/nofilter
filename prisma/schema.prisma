@@ -1,64 +1,10 @@
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
   provider = "prisma-client-js"
-}
-
-enum Role {
-  USER
-  MODERATOR
-  ADMIN
-}
-
-enum PostType {
-  THOUGHT
-  QUESTION
-  STORY
-  CONFESSION
-  ADVICE
-  DEBATE
-  ACHIEVEMENT
-}
-
-enum IdentityMode {
-  PROFILE
-  ANONYMOUS
-  ALIAS
-}
-
-enum ModerationStatus {
-  APPROVED
-  PENDING
-  FLAGGED
-  REMOVED
-}
-
-enum ReactionType {
-  HELPFUL
-  INSIGHTFUL
-  WELL_SAID
-  MADE_ME_THINK
-  AGREE
-  DISAGREE
-}
-
-enum ReportReason {
-  HARASSMENT
-  SPAM
-  THREAT
-  HATE_SPEECH
-  DOXXING
-  OTHER
-}
-
-enum ReportStatus {
-  PENDING
-  RESOLVED
-  DISMISSED
 }
 
 model User {
@@ -68,7 +14,7 @@ model User {
   displayName     String
   avatarUrl       String?
   bio             String?
-  role            Role     @default(USER)
+  role            String   @default("USER") // USER, MODERATOR, ADMIN
   reputationScore Int      @default(50)
   level           Int      @default(1)
   xp              Int      @default(0)
@@ -82,9 +28,6 @@ model User {
   reactions       Reaction[]
   reportsFiled    Report[] @relation("Reporter")
   reputationLogs  UserReputationLog[]
-
-  @@index([reputationScore])
-  @@index([username])
 }
 
 model Community {
@@ -93,114 +36,101 @@ model Community {
   slug        String   @unique
   description String
   icon        String
-  color       String   @default("#8b5cf6")
+  color       String   @default("#71717a")
   memberCount Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   posts       Post[]
-
-  @@index([slug])
 }
 
 model Post {
-  id               String           @id @default(cuid())
+  id               String   @id @default(cuid())
   authorId         String
   communityId      String
-  postType         PostType         @default(THOUGHT)
-  identityMode     IdentityMode     @default(PROFILE)
+  postType         String   @default("THOUGHT") // THOUGHT, QUESTION, STORY, CONFESSION, ADVICE, DEBATE, ACHIEVEMENT
+  identityMode     String   @default("PROFILE") // PROFILE, ANONYMOUS, ALIAS
   aliasName        String?
   title            String?
   content          String
-  tags             String[]         @default([])
+  tags             String   @default("")
   
   // Debate specific arguments
   debateAgreeTitle    String?
   debateDisagreeTitle String?
-  agreeCount          Int          @default(0)
-  disagreeCount       Int          @default(0)
+  agreeCount          Int      @default(0)
+  disagreeCount       Int      @default(0)
 
   // Reaction counters
-  helpfulCount     Int              @default(0)
-  insightfulCount  Int              @default(0)
-  wellSaidCount    Int              @default(0)
-  madeMeThinkCount Int              @default(0)
-  commentCount     Int              @default(0)
-  viewCount        Int              @default(0)
+  helpfulCount     Int      @default(0)
+  insightfulCount  Int      @default(0)
+  wellSaidCount    Int      @default(0)
+  madeMeThinkCount Int      @default(0)
+  commentCount     Int      @default(0)
+  viewCount        Int      @default(0)
 
-  moderationStatus ModerationStatus @default(APPROVED)
-  isLocked         Boolean          @default(false)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  moderationStatus String   @default("APPROVED") // APPROVED, PENDING, FLAGGED, REMOVED
+  isLocked         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  author           User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  community        Community        @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author           User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community        Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   comments         Comment[]
   reactions        Reaction[]
   reports          Report[]
-
-  @@index([communityId, createdAt])
-  @@index([authorId])
-  @@index([postType])
-  @@index([createdAt])
 }
 
 model Comment {
-  id               String           @id @default(cuid())
+  id               String   @id @default(cuid())
   postId           String
   authorId         String
   parentId         String?
   content          String
-  identityMode     IdentityMode     @default(PROFILE)
+  identityMode     String   @default("PROFILE")
   aliasName        String?
-  helpfulCount     Int              @default(0)
-  moderationStatus ModerationStatus @default(APPROVED)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  helpfulCount     Int      @default(0)
+  moderationStatus String   @default("APPROVED")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author           User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parent           Comment?         @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies          Comment[]        @relation("CommentReplies")
+  post             Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author           User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent           Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies          Comment[] @relation("CommentReplies")
   reactions        Reaction[]
   reports          Report[]
-
-  @@index([postId, createdAt])
-  @@index([authorId])
 }
 
 model Reaction {
-  id           String       @id @default(cuid())
+  id           String   @id @default(cuid())
   userId       String
   postId       String?
   commentId    String?
-  reactionType ReactionType
-  createdAt    DateTime     @default(now())
+  reactionType String   // HELPFUL, INSIGHTFUL, WELL_SAID, MADE_ME_THINK, AGREE, DISAGREE
+  createdAt    DateTime @default(now())
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment      Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post         Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment      Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId, reactionType])
-  @@index([postId])
 }
 
 model Report {
-  id          String       @id @default(cuid())
+  id          String   @id @default(cuid())
   reporterId  String
   postId      String?
   commentId   String?
-  reason      ReportReason
+  reason      String
   details     String?
-  status      ReportStatus @default(PENDING)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  status      String   @default("PENDING") // PENDING, RESOLVED, DISMISSED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  reporter    User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
-  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
-
-  @@index([status, createdAt])
+  reporter    User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 }
 
 model UserReputationLog {
@@ -211,6 +141,4 @@ model UserReputationLog {
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
 }

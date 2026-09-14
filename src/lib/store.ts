@@ -39,29 +39,14 @@ export const INITIAL_REPORTS: ReportItem[] = [
   },
 ];
 
-const STORAGE_KEYS = {
-  POSTS: "nofilter_posts_v1",
-  USER: "nofilter_user_v1",
-  REPORTS: "nofilter_reports_v1",
-};
-
 // In-memory global state
-let globalPosts = [...INITIAL_POSTS];
-let globalUser = { ...CURRENT_USER };
-let globalReports = [...INITIAL_REPORTS];
-let isHydrated = false;
+let globalPosts: PostItem[] = [...INITIAL_POSTS];
+let globalUser: UserProfile = { ...CURRENT_USER };
+let globalReports: ReportItem[] = [...INITIAL_REPORTS];
+let isLoaded = false;
 const listeners = new Set<() => void>();
 
 function notify() {
-  if (typeof window !== "undefined" && isHydrated) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(globalPosts));
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(globalUser));
-      localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(globalReports));
-    } catch (e) {
-      console.warn("LocalStorage save error:", e);
-    }
-  }
   listeners.forEach((listener) => listener());
 }
 
@@ -72,21 +57,35 @@ export function useNofilterStore() {
   const [communities] = useState<CommunityItem[]>(INITIAL_COMMUNITIES);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
 
+  // Sync with real backend REST APIs on mount
   useEffect(() => {
-    // Hydrate from localStorage once on client mount
-    if (!isHydrated && typeof window !== "undefined") {
+    async function syncBackend() {
       try {
-        const storedPosts = localStorage.getItem(STORAGE_KEYS.POSTS);
-        const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
-        const storedReports = localStorage.getItem(STORAGE_KEYS.REPORTS);
+        const postsRes = await fetch("/api/posts");
+        if (postsRes.ok) {
+          const data = await postsRes.json();
+          if (data.posts && data.posts.length > 0) {
+            globalPosts = data.posts;
+          }
+        }
 
-        if (storedPosts) globalPosts = JSON.parse(storedPosts);
-        if (storedUser) globalUser = JSON.parse(storedUser);
-        if (storedReports) globalReports = JSON.parse(storedReports);
+        const reportsRes = await fetch("/api/reports");
+        if (reportsRes.ok) {
+          const data = await reportsRes.json();
+          if (data.reports && data.reports.length > 0) {
+            globalReports = data.reports;
+          }
+        }
       } catch (e) {
-        console.warn("LocalStorage load error:", e);
+        console.warn("Backend API sync failed, falling back to local dataset:", e);
+      } finally {
+        isLoaded = true;
+        notify();
       }
-      isHydrated = true;
+    }
+
+    if (!isLoaded) {
+      syncBackend();
     }
 
     const handler = () => {
@@ -95,14 +94,14 @@ export function useNofilterStore() {
       setReports([...globalReports]);
     };
     listeners.add(handler);
-    handler(); // initial sync
+    handler();
 
     return () => {
       listeners.delete(handler);
     };
   }, []);
 
-  const addPost = (
+  const addPost = async (
     newPost: Omit<
       PostItem,
       | "id"
@@ -115,6 +114,7 @@ export function useNofilterStore() {
       | "disagreeCount"
     >
   ) => {
+    // Optimistic UI update
     const created: PostItem = {
       ...newPost,
       id: `post_${Date.now()}`,
@@ -127,35 +127,55 @@ export function useNofilterStore() {
       comments: [],
     };
     globalPosts = [created, ...globalPosts];
-
-    // Reward XP for constructive participation
     globalUser = {
       ...globalUser,
       xp: globalUser.xp + 15,
-      streakDays: globalUser.streakDays,
     };
-
     notify();
+
+    // Real server call
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newPost.title,
+          content: newPost.content,
+          postType: newPost.postType,
+          identityMode: newPost.identityMode,
+          aliasName: newPost.aliasName,
+          communityId: newPost.communityId,
+          tags: newPost.tags,
+          debateAgreeTitle: newPost.debateAgreeTitle,
+          debateDisagreeTitle: newPost.debateDisagreeTitle,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.post && data.post.id) {
+          // Sync server-generated ID
+          created.id = data.post.id;
+          notify();
+        }
+      }
+    } catch (e) {
+      console.warn("POST /api/posts network call failed:", e);
+    }
+
     return created;
   };
 
-  const toggleReaction = (
+  const toggleReaction = async (
     postId: string,
     reactionType: "helpful" | "insightful" | "wellSaid" | "madeMeThink"
   ) => {
+    // Optimistic UI update
     globalPosts = globalPosts.map((p) => {
       if (p.id !== postId) return p;
 
       const isCurrentlyActive = p.userReactions[reactionType];
       const countDelta = isCurrentlyActive ? -1 : 1;
-
-      // Update author reputation if reacting positively
-      if (!isCurrentlyActive) {
-        const points = reactionType === "helpful" ? 5 : 3;
-        if (p.authorId === globalUser.id) {
-          globalUser.reputationScore += points;
-        }
-      }
 
       return {
         ...p,
@@ -170,9 +190,21 @@ export function useNofilterStore() {
       };
     });
     notify();
+
+    // Real server call
+    try {
+      await fetch("/api/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, reactionType }),
+      });
+    } catch (e) {
+      console.warn("POST /api/reactions network call failed:", e);
+    }
   };
 
-  const voteDebate = (postId: string, stance: "AGREE" | "DISAGREE") => {
+  const voteDebate = async (postId: string, stance: "AGREE" | "DISAGREE") => {
+    // Optimistic UI update
     globalPosts = globalPosts.map((p) => {
       if (p.id !== postId) return p;
       if (p.userVote === stance) {
@@ -201,21 +233,33 @@ export function useNofilterStore() {
       }
     });
     notify();
+
+    // Real server call
+    try {
+      await fetch("/api/debates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "VOTE", postId, stance }),
+      });
+    } catch (e) {
+      console.warn("POST /api/debates network call failed:", e);
+    }
   };
 
-  const addComment = (
+  const addComment = async (
     postId: string,
     content: string,
     identityMode: "PROFILE" | "ANONYMOUS" | "ALIAS",
     aliasName?: string
   ) => {
+    // Optimistic UI update
     const newComment: CommentItem = {
       id: `c_${Date.now()}`,
       postId,
       authorId: globalUser.id,
       authorName:
         identityMode === "ANONYMOUS"
-          ? "Anonymous"
+          ? "Anonymous Author"
           : identityMode === "ALIAS"
           ? aliasName || "CuriousThinker"
           : globalUser.displayName,
@@ -235,12 +279,36 @@ export function useNofilterStore() {
         comments: [...p.comments, newComment],
       };
     });
-
     globalUser.xp += 10;
     notify();
+
+    // Real server call
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId,
+          content,
+          identityMode,
+          aliasName,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.comment?.id) {
+          newComment.id = data.comment.id;
+          notify();
+        }
+      }
+    } catch (e) {
+      console.warn("POST /api/comments network call failed:", e);
+    }
   };
 
-  const awardDelta = (postId: string, commentId: string) => {
+  const awardDelta = async (postId: string, commentId: string) => {
+    // Optimistic update
     globalPosts = globalPosts.map((p) => {
       if (p.id !== postId) return p;
       return {
@@ -256,9 +324,20 @@ export function useNofilterStore() {
     });
     globalUser.xp += 20;
     notify();
+
+    // Real server call
+    try {
+      await fetch("/api/debates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELTA", postId, commentId }),
+      });
+    } catch (e) {
+      console.warn("POST /api/debates Delta failed:", e);
+    }
   };
 
-  const submitReport = (postId: string, reason: string, details?: string) => {
+  const submitReport = async (postId: string, reason: string, details?: string) => {
     const targetPost = globalPosts.find((p) => p.id === postId);
     if (!targetPost) return;
 
@@ -277,9 +356,20 @@ export function useNofilterStore() {
 
     globalReports = [newReport, ...globalReports];
     notify();
+
+    // Real server call
+    try {
+      await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, reason, details }),
+      });
+    } catch (e) {
+      console.warn("POST /api/reports failed:", e);
+    }
   };
 
-  const resolveReport = (reportId: string, action: "DISMISS" | "REMOVE") => {
+  const resolveReport = async (reportId: string, action: "DISMISS" | "REMOVE") => {
     const rep = globalReports.find((r) => r.id === reportId);
     if (rep && action === "REMOVE") {
       globalPosts = globalPosts.filter((p) => p.id !== rep.postId);
@@ -288,16 +378,17 @@ export function useNofilterStore() {
       r.id === reportId ? { ...r, status: action === "REMOVE" ? "RESOLVED" : "DISMISSED" } : r
     );
     notify();
-  };
 
-  const resetData = () => {
-    globalPosts = [...INITIAL_POSTS];
-    globalUser = { ...CURRENT_USER };
-    globalReports = [...INITIAL_REPORTS];
-    if (typeof window !== "undefined") {
-      localStorage.clear();
+    // Real server call
+    try {
+      await fetch("/api/reports", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, action }),
+      });
+    } catch (e) {
+      console.warn("PATCH /api/reports failed:", e);
     }
-    notify();
   };
 
   return {
@@ -314,6 +405,5 @@ export function useNofilterStore() {
     awardDelta,
     submitReport,
     resolveReport,
-    resetData,
   };
 }
